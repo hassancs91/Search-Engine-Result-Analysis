@@ -146,7 +146,7 @@ async def analyze_data_old(container_id):
 
     # Loop through each keyword
     for keyword_id, keyword_value in container_keywords:
-        serp_results = await google.get_serp_results(keyword_value,2)
+        serp_results = await google.get_serp_results(keyword_value,100)
     
         for result in serp_results:
             result_id = await google.save_search_results(result, keyword_id)
