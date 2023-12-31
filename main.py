@@ -107,22 +107,30 @@ async def analyze_data(container_id):
         ''', container_id)
 
         for index, (keyword_id, keyword_value) in enumerate(container_keywords):
-            # Placeholder for getting SERP results and saving them
-            serp_results = await google.get_serp_results(keyword_value, 100)
-            for result in serp_results:
-                result_id = await google.save_search_results(result, keyword_id)
-                if result_id:
-                    # Placeholder for fetching and saving metrics
-                    metrics = await met.fetch_metrics(result, keyword_value)
-                    await met.save_metrics_to_db(metrics, keyword_value, container_id, result_id)
+            try:
+                # Placeholder for getting SERP results and saving them
+                serp_results = await google.get_serp_results(keyword_value, 100)
+                for result in serp_results:
+                    try:
+                        result_id = await google.save_search_results(result, keyword_id)
+                        if result_id:
+                            # Placeholder for fetching and saving metrics
+                            metrics = await met.fetch_metrics(result, keyword_value)
+                            await met.save_metrics_to_db(metrics, keyword_value, container_id, result_id)
+                    except Exception as inner_error:
+                        # Handle errors in result processing
+                        print(f"Error processing result for keyword {keyword_value}: {inner_error}")
 
-            # Calculate and update progress using the row ID
-            progress = (index + 1) / total_keywords * 100
-            await conn.execute('''
-                UPDATE progress_log 
-                SET message = $2, progress_percentage = $3 
-                WHERE id = $1
-            ''', row_id, f"Processed {index + 1} of {total_keywords} keywords", progress)
+                # Calculate and update progress using the row ID
+                progress = (index + 1) / total_keywords * 100
+                await conn.execute('''
+                    UPDATE progress_log 
+                    SET message = $2, progress_percentage = $3 
+                    WHERE id = $1
+                ''', row_id, f"Processed {index + 1} of {total_keywords} keywords", progress)
+            except Exception as outer_error:
+                # Handle errors in keyword processing
+                print(f"Error processing keyword {keyword_value}: {outer_error}")
 
         # Calculate the total duration
         total_duration = time.time() - start_time

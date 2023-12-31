@@ -205,20 +205,35 @@ async def get_api_data(session, url, params, host):
         print(f"An error occurred: {e}")
     return None
 
-def parse_data(backlink_info, domain_authority_info, title, snippet, keyword):
-    # Safely extract data from the API responses with default values for missing keys
-    total_backlinks = backlink_info.get('result', {}).get('backlinks_info', {}).get('backlinks', 0)
-    edu_backlinks = backlink_info.get('result', {}).get('backlinks_info', {}).get('edu_backlinks', 0)
-    gov_backlinks = backlink_info.get('result', {}).get('backlinks_info', {}).get('gov_backlinks', 0)
-    ref_domains = backlink_info.get('result', {}).get('backlinks_info', {}).get('refdomains', 0)
-    dofollow_backlinks = backlink_info.get('result', {}).get('backlinks_info', {}).get('dofollow_backlinks', 0)
-    nofollow_backlinks = backlink_info.get('result', {}).get('backlinks_info', {}).get('nofollow_backlinks', 0)
-    domain_authority = domain_authority_info.get('result', {}).get('domain_stats', {}).get('domain_power', 0)
-    page_authority = domain_authority_info.get('result', {}).get('domain_stats', {}).get('page_power', 0)
 
-    # Check if the keyword is in the title and meta description (handling cases where they might be None)
-    keyword_in_title = keyword.lower() in (title or '').lower()
-    keyword_in_meta = keyword.lower() in (snippet or '').lower()
+
+def parse_data(backlink_info, domain_authority_info, title, snippet, keyword):
+    # Define a safe getter function
+    def safe_get(d, keys, default=None):
+        for key in keys:
+            d = d.get(key) if isinstance(d, dict) else None
+            if d is None:
+                return default
+        return d
+
+    # Safely extract data from the API responses with default values for missing keys
+    total_backlinks = safe_get(backlink_info, ['result', 'backlinks_info', 'backlinks'], 0)
+    edu_backlinks = safe_get(backlink_info, ['result', 'backlinks_info', 'edu_backlinks'], 0)
+    gov_backlinks = safe_get(backlink_info, ['result', 'backlinks_info', 'gov_backlinks'], 0)
+    ref_domains = safe_get(backlink_info, ['result', 'backlinks_info', 'refdomains'], 0)
+    dofollow_backlinks = safe_get(backlink_info, ['result', 'backlinks_info', 'dofollow_backlinks'], 0)
+    nofollow_backlinks = safe_get(backlink_info, ['result', 'backlinks_info', 'nofollow_backlinks'], 0)
+    domain_authority = safe_get(domain_authority_info, ['result', 'domain_stats', 'domain_power'], 0)
+    page_authority = safe_get(domain_authority_info, ['result', 'domain_stats', 'page_power'], 0)
+
+    # Normalize the title and snippet to handle None values
+    normalized_title = (title or '').lower()
+    normalized_snippet = (snippet or '').lower()
+    normalized_keyword = (keyword or '').lower()
+
+    # Check if the keyword is in the title and meta description
+    keyword_in_title = normalized_keyword in normalized_title
+    keyword_in_meta = normalized_keyword in normalized_snippet
 
     # Collect and return metrics
     metrics = {
