@@ -108,7 +108,7 @@ async def analyze_data(container_id):
 
         for index, (keyword_id, keyword_value) in enumerate(container_keywords):
             # Placeholder for getting SERP results and saving them
-            serp_results = await google.get_serp_results(keyword_value, 5)
+            serp_results = await google.get_serp_results(keyword_value, 100)
             for result in serp_results:
                 result_id = await google.save_search_results(result, keyword_id)
                 if result_id:
